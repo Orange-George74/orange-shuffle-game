@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Orange Web3 Shell Game 🍊</title>
+<style>
+  body {
+    margin: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #fff8f0, #ffe6cc);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+  }
+
+  .game-container {
+    text-align: center;
+  }
+
+  .cups-area {
+    position: relative;
+    width: 400px;
+    height: 150px;
+    margin-bottom: 30px;
+  }
+
+  .cup {
+    width: 80px;
+    height: 100px;
+    background: #fff;
+    border-radius: 10px 10px 0 0;
+    border: 2px solid #ff6600;
+    box-shadow: 0 5px 10px rgba(0,0,0,0.2);
+    position: absolute;
+    bottom: 0;
+    cursor: pointer;
+    transition: left 0.5s ease;
+  }
+
+  .orange {
+    width: 30px;
+    height: 30px;
+    background: radial-gradient(circle at 30% 30%, #ffa500, #ff6600);
+    border-radius: 50%;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+  }
+
+  button {
+    padding: 10px 20px;
+    background-color: #ff6600;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 16px;
+  }
+</style>
+</head>
+<body>
+<div class="game-container">
+  <h1>Orange Web3 Shell Game 🍊</h1>
+  <div class="cups-area">
+    <div class="cup" data-index="0" style="left: 0;"><div class="orange"></div></div>
+    <div class="cup" data-index="1" style="left: 160px;"><div class="orange"></div></div>
+    <div class="cup" data-index="2" style="left: 320px;"><div class="orange"></div></div>
+  </div>
+  <button id="shuffleBtn">Shuffle Cups</button>
+  <p id="message"></p>
+</div>
+
+<script>
+const cups = document.querySelectorAll('.cup');
+const message = document.getElementById('message');
+let ballIndex = 0;
+
+// Initial orange placement
+function placeBall() {
+  cups.forEach((cup, i) => {
+    cup.querySelector('.orange').style.display = i === ballIndex ? 'block' : 'none';
+  });
+}
+
+// Shuffle cups with actual horizontal movement
+function shuffleCups(times = 10) {
+  const positions = [0, 160, 320]; // x positions of cups
+  let i = 0;
+
+  message.textContent = "Try to follow the orange!";
+
+  function step() {
+    if (i >= times) return;
+
+    // Pick two cups to swap
+    let a = Math.floor(Math.random()*3);
+    let b;
+    do { b = Math.floor(Math.random()*3); } while(b===a);
+
+    // Animate swapping
+    const tempLeft = cups[a].style.left;
+    cups[a].style.left = cups[b].style.left;
+    cups[b].style.left = tempLeft;
+
+    // Update ball index if necessary
+    if (ballIndex === a) ballIndex = b;
+    else if (ballIndex === b) ballIndex = a;
+
+    i++;
+    setTimeout(step, 400);
+  }
+  step();
+}
+
+// Click event to guess
+cups.forEach(cup => {
+  cup.addEventListener('click', () => {
+    if (cup.dataset.index == ballIndex) {
+      message.textContent = "🎉 You found the orange!";
+    } else {
+      message.textContent = "😢 Wrong cup! Try again.";
+    }
+    placeBall();
+  });
+});
+
+// Setup
+placeBall();
+document.getElementById('shuffleBtn').addEventListener('click', shuffleCups);
+</script>
+</body>
+</html>
