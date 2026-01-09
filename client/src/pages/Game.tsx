@@ -221,23 +221,23 @@ function Cup({
         whileTap={clickable ? { scale: 0.95 } : {}}
         className={`
           relative z-10 w-full h-full 
-          bg-gradient-to-br from-white to-orange-50
+          bg-gradient-to-br from-orange-400 to-orange-600
           border-2 rounded-t-[40px] rounded-b-[15px]
           cup-shadow flex items-center justify-center
           transition-colors duration-300
-          ${highlight ? 'border-green-500 ring-4 ring-green-500/20' : 'border-orange-200'}
-          ${clickable ? 'cursor-pointer hover:border-orange-400' : 'cursor-default'}
+          ${highlight ? 'border-green-400 ring-4 ring-green-500/30' : 'border-orange-700'}
+          ${clickable ? 'cursor-pointer hover:border-orange-300 hover:from-orange-300 hover:to-orange-500' : 'cursor-default'}
         `}
       >
         <span className={`
-          text-3xl font-bold font-display opacity-20
-          ${highlight ? 'text-green-500' : 'text-orange-900'}
+          text-3xl font-bold font-display opacity-40
+          ${highlight ? 'text-green-300' : 'text-white'}
         `}>
           ?
         </span>
         
         {/* Cup shine reflection */}
-        <div className="absolute top-2 right-4 w-4 h-20 bg-white/40 rounded-full blur-[2px] skew-x-[-15deg]" />
+        <div className="absolute top-2 right-4 w-4 h-20 bg-white/30 rounded-full blur-[2px] skew-x-[-15deg]" />
       </motion.button>
       
       {/* Shadow under the cup */}
