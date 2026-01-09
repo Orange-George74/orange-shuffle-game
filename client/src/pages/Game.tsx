@@ -3,33 +3,33 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { useSubmitGameResult } from "@/hooks/use-game";
 import { StatsCard } from "@/components/StatsCard";
-import { Loader2, RefreshCw } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
-// Constants
 const CUP_COUNT = 3;
-const POSITIONS = [0, 1, 2];
-// Using relative percentages for responsiveness or fixed widths
-// For framer motion layout animations, simple indexes work best if we position absolutely or use layoutId
-// Here we will use flexbox and layoutId for automatic position animation
 
-type GameState = "idle" | "shuffling" | "guessing" | "revealed";
+type GameState = "idle" | "shuffling" | "guessingFruit" | "guessingGlass" | "revealed";
+
+type HiddenObject = "fruit" | "glass" | null;
 
 export default function Game() {
   const [gameState, setGameState] = useState<GameState>("idle");
-  const [ballPosition, setBallPosition] = useState<number>(1); // 0, 1, 2
-  const [cupOrder, setCupOrder] = useState<number[]>([0, 1, 2]); // visual order of cups
+  const [cupOrder, setCupOrder] = useState<number[]>([0, 1, 2]);
   const [shufflesLeft, setShufflesLeft] = useState(0);
-  const [winningCup, setWinningCup] = useState<number | null>(null); // Visual highlight
+  
+  const [fruitCup, setFruitCup] = useState<number>(0);
+  const [glassCup, setGlassCup] = useState<number>(2);
+  
+  const [fruitFound, setFruitFound] = useState<boolean | null>(null);
+  const [glassFound, setGlassFound] = useState<boolean | null>(null);
+  const [guessedCups, setGuessedCups] = useState<number[]>([]);
   
   const submitResult = useSubmitGameResult();
   const { toast } = useToast();
 
-  // Helper to shuffle array
   const shuffleCups = () => {
     setCupOrder((prev) => {
       const newOrder = [...prev];
-      // Simple swap of two random cups
       const idx1 = Math.floor(Math.random() * CUP_COUNT);
       let idx2 = Math.floor(Math.random() * CUP_COUNT);
       while (idx1 === idx2) idx2 = Math.floor(Math.random() * CUP_COUNT);
@@ -42,69 +42,122 @@ export default function Game() {
     });
   };
 
-  // Game Loop Effect
   useEffect(() => {
     if (gameState === "shuffling" && shufflesLeft > 0) {
       const timeout = setTimeout(() => {
         shuffleCups();
         setShufflesLeft((prev) => prev - 1);
-      }, 400); // Speed of shuffle
+      }, 400);
       return () => clearTimeout(timeout);
     } else if (gameState === "shuffling" && shufflesLeft === 0) {
-      setGameState("guessing");
+      setGameState("guessingFruit");
     }
   }, [gameState, shufflesLeft]);
 
   const startGame = () => {
-    // Hide ball first
-    setWinningCup(null);
+    setFruitFound(null);
+    setGlassFound(null);
+    setGuessedCups([]);
+    
+    const cups = [0, 1, 2];
+    const fruitPosition = cups[Math.floor(Math.random() * cups.length)];
+    const remainingCups = cups.filter(c => c !== fruitPosition);
+    const glassPosition = remainingCups[Math.floor(Math.random() * remainingCups.length)];
+    
+    setFruitCup(fruitPosition);
+    setGlassCup(glassPosition);
+    
+    setCupOrder([0, 1, 2]);
     setGameState("shuffling");
-    
-    // Pick new random position for the ball logically (0, 1, 2 in the array)
-    // But visual position depends on shuffling. 
-    // Actually, physically, the ball is under a specific cup ID.
-    // Let's say Ball is always under Cup ID 1 (The middle one initially).
-    // We just track where Cup ID 1 moves.
-    
-    setShufflesLeft(10); // Number of swaps
+    setShufflesLeft(10);
   };
 
   const handleCupClick = async (cupId: number) => {
-    if (gameState !== "guessing") return;
+    if (gameState === "guessingFruit") {
+      const isCorrect = cupId === fruitCup;
+      setFruitFound(isCorrect);
+      setGuessedCups([cupId]);
+      
+      if (isCorrect) {
+        toast({
+          title: "You found the fruit!",
+          description: "Now find the glass of juice...",
+          className: "bg-green-50 border-green-200 text-green-900",
+        });
+      } else {
+        toast({
+          title: "Wrong cup for the fruit!",
+          description: "Now try to find the glass...",
+          variant: "destructive",
+        });
+      }
+      
+      setGameState("guessingGlass");
+      
+    } else if (gameState === "guessingGlass") {
+      const isCorrect = cupId === glassCup;
+      setGlassFound(isCorrect);
+      setGuessedCups(prev => [...prev, cupId]);
+      setGameState("revealed");
+      
+      const fruitWon = fruitFound === true;
+      const bothWon = fruitWon && isCorrect;
+      
+      if (bothWon) {
+        toast({
+          title: "Perfect! Both found!",
+          description: "You're a shell game master!",
+          className: "bg-green-50 border-green-200 text-green-900",
+        });
+      } else if (fruitWon || isCorrect) {
+        toast({
+          title: "Partial win!",
+          description: `You found ${fruitWon ? "the fruit" : ""}${fruitWon && isCorrect ? " and " : ""}${isCorrect ? "the glass" : ""}.`,
+          className: "bg-amber-50 border-amber-200 text-amber-900",
+        });
+      } else {
+        toast({
+          title: "Both missed!",
+          description: "Better luck next time.",
+          variant: "destructive",
+        });
+      }
 
-    setGameState("revealed");
-    const isWin = cupId === 1; // Ball is always under Cup #1
-    
-    if (isWin) {
-      setWinningCup(cupId);
-      toast({
-        title: "You found it! 🎉",
-        description: "Great eye! The Web3 orange is yours.",
-        className: "bg-green-50 border-green-200 text-green-900",
-      });
-    } else {
-      setWinningCup(1); // Show where it really was
-      toast({
-        title: "Wrong cup!",
-        description: "Better luck next time.",
-        variant: "destructive",
-      });
+      try {
+        await submitResult.mutateAsync({ won: bothWon });
+      } catch (e) {
+        console.error(e);
+      }
     }
+  };
 
-    try {
-      await submitResult.mutateAsync({ won: isWin });
-    } catch (e) {
-      console.error(e);
+  const getObjectUnderCup = (cupId: number): HiddenObject => {
+    if (cupId === fruitCup) return "fruit";
+    if (cupId === glassCup) return "glass";
+    return null;
+  };
+
+  const getPromptText = () => {
+    switch (gameState) {
+      case "shuffling":
+        return "Shuffling...";
+      case "guessingFruit":
+        return "Find the Orange!";
+      case "guessingGlass":
+        return "Now find the Juice Glass!";
+      case "revealed":
+        return "Game Over!";
+      default:
+        return "Start Game";
     }
   };
 
   return (
     <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
-      {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-16 space-y-4"
+        className="text-center mb-12 space-y-4"
       >
         <div className="inline-block px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-sm font-semibold tracking-wide uppercase mb-2">
           Decentralized Luck
@@ -113,39 +166,64 @@ export default function Game() {
           Shell Game
         </h1>
         <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-          Keep your eye on the <span className="text-orange-600 font-bold">Orange Cup</span>. 
-          Don't lose track as they shuffle!
+          Find both the <span className="text-orange-600 font-bold">Orange</span> and the <span className="text-amber-500 font-bold">Juice Glass</span>!
         </p>
       </motion.div>
 
-      {/* Game Area */}
-      <div className="relative w-full max-w-4xl h-80 md:h-96 flex items-center justify-center bg-white/40 rounded-3xl backdrop-blur-sm border border-white/60 shadow-inner overflow-hidden mb-12">
+      <div className="flex gap-8 justify-center mb-8">
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-full orange-gradient" />
+          <span className="text-sm text-muted-foreground">Orange Fruit</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 glass-icon" />
+          <span className="text-sm text-muted-foreground">Juice Glass</span>
+        </div>
+      </div>
+
+      <div className="relative w-full max-w-4xl h-80 md:h-96 flex items-center justify-center bg-white/40 rounded-3xl backdrop-blur-sm border border-white/60 shadow-inner overflow-hidden mb-8">
         <div className="flex gap-4 md:gap-12 lg:gap-24 relative z-10 px-8">
           <AnimatePresence>
             {cupOrder.map((cupId) => (
               <Cup 
                 key={cupId} 
                 id={cupId} 
-                hasBall={cupId === 1}
+                hiddenObject={getObjectUnderCup(cupId)}
                 isRevealed={gameState === "revealed" || gameState === "idle"}
-                highlight={winningCup === cupId}
+                wasGuessed={guessedCups.includes(cupId)}
+                fruitFound={fruitFound}
+                glassFound={glassFound}
+                fruitCup={fruitCup}
+                glassCup={glassCup}
                 onClick={() => handleCupClick(cupId)}
-                clickable={gameState === "guessing"}
+                clickable={
+                  (gameState === "guessingFruit" && !guessedCups.includes(cupId)) ||
+                  (gameState === "guessingGlass" && !guessedCups.includes(cupId))
+                }
+                gameState={gameState}
               />
             ))}
           </AnimatePresence>
         </div>
         
-        {/* Decorative floor shadow */}
         <div className="absolute bottom-16 w-3/4 h-8 bg-black/5 blur-xl rounded-[100%]" />
       </div>
 
-      {/* Controls */}
+      <motion.div 
+        key={gameState}
+        initial={{ opacity: 0, scale: 0.9 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="text-2xl font-display font-bold text-orange-600 mb-6"
+      >
+        {getPromptText()}
+      </motion.div>
+
       <div className="flex justify-center mb-16">
         <Button
           onClick={startGame}
-          disabled={gameState === "shuffling" || submitResult.isPending}
+          disabled={gameState === "shuffling" || gameState === "guessingFruit" || gameState === "guessingGlass" || submitResult.isPending}
           size="lg"
+          data-testid="button-start-game"
           className="
             h-16 px-12 text-lg rounded-2xl font-display font-bold tracking-wide shadow-xl shadow-orange-500/20
             bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600
@@ -158,36 +236,57 @@ export default function Game() {
               <RefreshCw className="mr-3 h-6 w-6 animate-spin" />
               Shuffling...
             </>
-          ) : gameState === "guessing" ? (
-            "Pick a Cup!"
+          ) : gameState === "revealed" || gameState === "idle" ? (
+            gameState === "revealed" ? "Play Again" : "Start Game"
           ) : (
-            "Start Game"
+            "Make your guess!"
           )}
         </Button>
       </div>
 
-      {/* Stats */}
       <StatsCard />
     </div>
   );
 }
 
-// Sub-component for individual cup
 function Cup({ 
   id, 
-  hasBall, 
+  hiddenObject, 
   isRevealed, 
-  highlight, 
+  wasGuessed,
+  fruitFound,
+  glassFound,
+  fruitCup,
+  glassCup,
   onClick, 
-  clickable 
+  clickable,
+  gameState,
 }: { 
   id: number; 
-  hasBall: boolean; 
+  hiddenObject: HiddenObject;
   isRevealed: boolean; 
-  highlight: boolean;
+  wasGuessed: boolean;
+  fruitFound: boolean | null;
+  glassFound: boolean | null;
+  fruitCup: number;
+  glassCup: number;
   onClick: () => void;
   clickable: boolean;
+  gameState: GameState;
 }) {
+  const shouldShowObject = isRevealed || (gameState === "guessingGlass" && id === fruitCup);
+  
+  const getHighlightStyle = () => {
+    if (!isRevealed && gameState !== "guessingGlass") return "";
+    
+    if (id === fruitCup && fruitFound === true) return "border-green-400 ring-4 ring-green-500/30";
+    if (id === fruitCup && fruitFound === false && isRevealed) return "border-orange-400 ring-4 ring-orange-500/30";
+    if (id === glassCup && glassFound === true) return "border-green-400 ring-4 ring-green-500/30";
+    if (id === glassCup && glassFound === false && isRevealed) return "border-amber-400 ring-4 ring-amber-500/30";
+    
+    return "";
+  };
+
   return (
     <motion.div
       layout
@@ -198,23 +297,35 @@ function Cup({
       }}
       className="relative flex flex-col items-center justify-end w-24 md:w-32 h-32 md:h-40"
     >
-      {/* The Ball - Positioned absolute so it can sit 'under' */}
-      <motion.div
-        initial={false}
-        animate={{ 
-          opacity: hasBall ? 1 : 0,
-          scale: hasBall ? 1 : 0.5 
-        }}
-        className="absolute bottom-2 w-10 h-10 md:w-14 md:h-14 rounded-full orange-gradient shadow-inner z-0"
-      />
+      {hiddenObject === "fruit" && (
+        <motion.div
+          initial={false}
+          animate={{ 
+            opacity: shouldShowObject ? 1 : 0,
+            scale: shouldShowObject ? 1 : 0.5 
+          }}
+          className="absolute bottom-2 w-10 h-10 md:w-14 md:h-14 rounded-full orange-gradient shadow-inner z-0"
+        />
+      )}
+      
+      {hiddenObject === "glass" && (
+        <motion.div
+          initial={false}
+          animate={{ 
+            opacity: shouldShowObject ? 1 : 0,
+            scale: shouldShowObject ? 1 : 0.5 
+          }}
+          className="absolute bottom-2 w-10 h-14 md:w-12 md:h-16 glass-icon z-0"
+        />
+      )}
 
-      {/* The Cup */}
       <motion.button
         onClick={onClick}
         disabled={!clickable}
+        data-testid={`button-cup-${id}`}
         initial={false}
         animate={{
-          y: isRevealed && hasBall ? -60 : isRevealed && !hasBall ? -20 : 0,
+          y: shouldShowObject && hiddenObject ? -60 : 0,
           scale: clickable ? 1.05 : 1,
         }}
         whileHover={clickable ? { y: -10 } : {}}
@@ -225,22 +336,19 @@ function Cup({
           border-2 rounded-t-[40px] rounded-b-[15px]
           cup-shadow flex items-center justify-center
           transition-colors duration-300
-          ${highlight ? 'border-green-400 ring-4 ring-green-500/30' : 'border-orange-700'}
+          ${getHighlightStyle() || 'border-orange-700'}
           ${clickable ? 'cursor-pointer hover:border-orange-300 hover:from-orange-300 hover:to-orange-500' : 'cursor-default'}
         `}
       >
         <span className={`
-          text-3xl font-bold font-display opacity-40
-          ${highlight ? 'text-green-300' : 'text-white'}
+          text-3xl font-bold font-display opacity-40 text-white
         `}>
           ?
         </span>
         
-        {/* Cup shine reflection */}
         <div className="absolute top-2 right-4 w-4 h-20 bg-white/30 rounded-full blur-[2px] skew-x-[-15deg]" />
       </motion.button>
       
-      {/* Shadow under the cup */}
       <div className="absolute -bottom-4 w-20 h-4 bg-black/10 blur-md rounded-[100%] z-0" />
     </motion.div>
   );

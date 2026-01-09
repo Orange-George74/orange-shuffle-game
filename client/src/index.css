@@ -61,6 +61,24 @@
   background: radial-gradient(circle at 30% 30%, #ffd080, #ff6600);
 }
 
+.glass-icon {
+  background: linear-gradient(135deg, rgba(255, 200, 100, 0.9) 0%, rgba(255, 165, 0, 0.95) 100%);
+  border-radius: 4px 4px 8px 8px;
+  position: relative;
+  border: 2px solid rgba(200, 120, 0, 0.5);
+}
+
+.glass-icon::before {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 3px;
+  width: 40%;
+  height: 80%;
+  background: rgba(255, 255, 255, 0.4);
+  border-radius: 2px;
+}
+
 /* Glassmorphism Card */
 .glass-card {
   @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-xl shadow-orange-500/5;
