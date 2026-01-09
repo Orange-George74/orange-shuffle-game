@@ -290,12 +290,14 @@ function Cup({
   return (
     <motion.div
       layout
+      layoutId={`cup-container-${id}`}
       transition={{ 
         type: "spring", 
         stiffness: 300, 
         damping: 25 
       }}
-      className="relative flex flex-col items-center justify-end w-24 md:w-32 h-32 md:h-40"
+      className="relative flex flex-col items-center justify-end"
+      style={{ width: 128, height: 160 }}
     >
       {hiddenObject === "fruit" && (
         <motion.div
