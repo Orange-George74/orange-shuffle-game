@@ -7,7 +7,7 @@ export function StatsCard() {
 
   if (isLoading) {
     return (
-      <div className="w-full max-w-4xl mx-auto h-32 animate-pulse bg-white/50 rounded-2xl" />
+      <div className="w-full max-w-4xl mx-auto h-32 animate-pulse bg-black/30 rounded-2xl" />
     );
   }
 
@@ -18,29 +18,29 @@ export function StatsCard() {
       label: "Total Games",
       value: stats.totalGames,
       icon: Hash,
-      color: "text-blue-500",
-      bg: "bg-blue-500/10",
+      color: "text-blue-400",
+      bg: "bg-blue-500/20",
     },
     {
       label: "Wins",
       value: stats.wins,
       icon: Trophy,
-      color: "text-orange-500",
-      bg: "bg-orange-500/10",
+      color: "text-orange-400",
+      bg: "bg-orange-500/20",
     },
     {
       label: "Losses",
       value: stats.losses,
       icon: XCircle,
-      color: "text-red-500",
-      bg: "bg-red-500/10",
+      color: "text-red-400",
+      bg: "bg-red-500/20",
     },
     {
       label: "Win Rate",
-      value: `${(stats.winRate * 100).toFixed(1)}%`,
+      value: `${stats.winRate.toFixed(1)}%`,
       icon: TrendingUp,
-      color: "text-green-500",
-      bg: "bg-green-500/10",
+      color: "text-green-400",
+      bg: "bg-green-500/20",
     },
   ];
 
@@ -57,10 +57,10 @@ export function StatsCard() {
           <div className={`p-3 rounded-full mb-3 ${item.bg} ${item.color}`}>
             <item.icon className="w-6 h-6" />
           </div>
-          <span className="text-3xl font-display font-bold text-foreground">
+          <span className="text-3xl font-display font-bold text-white">
             {item.value}
           </span>
-          <span className="text-sm font-medium text-muted-foreground uppercase tracking-wider mt-1">
+          <span className="text-sm font-medium text-gray-400 uppercase tracking-wider mt-1">
             {item.label}
           </span>
         </motion.div>

@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;500;600;700;800;900&display=swap');
 
 @tailwind base;
 @tailwind components;
@@ -6,29 +6,29 @@
 
 :root {
   --font-body: 'Outfit', sans-serif;
-  --font-display: 'Space Grotesk', sans-serif;
+  --font-display: 'Orbitron', sans-serif;
 
-  /* Orange Web3 Palette - Light Theme */
-  --background: 36 100% 99%;       /* #fffbf5 */
-  --foreground: 20 14% 4%;         /* #0c0a09 */
+  /* Dark Tech Orange Palette */
+  --background: 220 10% 10%;       /* Dark charcoal */
+  --foreground: 0 0% 95%;          /* Near white */
   
   --primary: 25 95% 53%;           /* #ff6600 - Vibrant Orange */
-  --primary-foreground: 60 9.1% 97.8%;
+  --primary-foreground: 0 0% 100%;
   
-  --secondary: 32 100% 96%;        /* #fff5e6 */
-  --secondary-foreground: 24 9.8% 10%;
+  --secondary: 220 10% 18%;        /* Darker grey */
+  --secondary-foreground: 0 0% 90%;
   
-  --muted: 30 20% 96%;
-  --muted-foreground: 25 5% 45%;
+  --muted: 220 10% 20%;
+  --muted-foreground: 220 5% 60%;
   
-  --accent: 35 100% 92%;           /* #ffeebb */
-  --accent-foreground: 24 9.8% 10%;
+  --accent: 25 90% 50%;            /* Orange accent */
+  --accent-foreground: 0 0% 100%;
   
   --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 60 9.1% 97.8%;
+  --destructive-foreground: 0 0% 100%;
   
-  --border: 30 20% 92%;
-  --input: 30 20% 92%;
+  --border: 220 10% 25%;
+  --input: 220 10% 25%;
   --ring: 25 95% 53%;
   
   --radius: 1rem;
@@ -38,10 +38,6 @@
   body {
     @apply bg-background text-foreground antialiased selection:bg-primary/20 selection:text-primary;
     font-family: var(--font-body);
-    background-image: 
-      radial-gradient(circle at 10% 20%, rgba(255, 165, 0, 0.05) 0%, transparent 40%),
-      radial-gradient(circle at 90% 80%, rgba(255, 102, 0, 0.08) 0%, transparent 40%);
-    background-attachment: fixed;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -53,15 +49,24 @@
 /* Custom Cup Styles */
 .cup-shadow {
   box-shadow: 
-    0 20px 25px -5px rgba(255, 102, 0, 0.1),
-    0 8px 10px -6px rgba(255, 102, 0, 0.1);
+    0 20px 25px -5px rgba(0, 0, 0, 0.4),
+    0 8px 10px -6px rgba(255, 102, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 .orange-gradient {
   background: radial-gradient(circle at 30% 30%, #ffd080, #ff6600);
+  box-shadow: 0 0 20px rgba(255, 102, 0, 0.6);
 }
 
-/* Glassmorphism Card */
+/* Glassmorphism Card - Dark Theme */
 .glass-card {
-  @apply bg-white/70 backdrop-blur-md border border-white/50 shadow-xl shadow-orange-500/5;
+  @apply bg-black/40 backdrop-blur-xl border border-white/10 shadow-2xl;
+}
+
+/* Game background container */
+.game-bg {
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
 }

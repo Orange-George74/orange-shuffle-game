@@ -5,6 +5,7 @@ import { useSubmitGameResult } from "@/hooks/use-game";
 import { StatsCard } from "@/components/StatsCard";
 import { Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import bgImage from "@assets/a-modern-abstract-digital-background-fea_XOEiEaRDTkmr_0f0Fy6tC_1768020326024.png";
 
 // Constants
 const CUP_COUNT = 3;
@@ -99,27 +100,33 @@ export default function Game() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center">
+    <div 
+      className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 flex flex-col items-center game-bg"
+      style={{ backgroundImage: `url(${bgImage})` }}
+    >
+      {/* Dark overlay for better readability */}
+      <div className="fixed inset-0 bg-black/40 -z-10" />
+      
       {/* Header */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="text-center mb-16 space-y-4"
+        className="text-center mb-16 space-y-4 relative z-10"
       >
-        <div className="inline-block px-4 py-1.5 rounded-full bg-orange-100 text-orange-700 text-sm font-semibold tracking-wide uppercase mb-2">
-          Decentralized Luck
+        <div className="inline-block px-4 py-1.5 rounded-full bg-orange-500/20 border border-orange-500/30 text-orange-400 text-sm font-semibold tracking-widest uppercase mb-2">
+          Web3 Gaming
         </div>
-        <h1 className="text-5xl md:text-7xl font-display font-bold text-foreground bg-clip-text text-transparent bg-gradient-to-r from-orange-600 to-amber-500">
-          Shell Game
+        <h1 className="text-5xl md:text-7xl font-display font-bold bg-clip-text text-transparent bg-gradient-to-r from-orange-400 via-orange-500 to-amber-500 drop-shadow-lg">
+          SHELL GAME
         </h1>
-        <p className="text-xl text-muted-foreground max-w-lg mx-auto">
-          Keep your eye on the <span className="text-orange-600 font-bold">Orange Cup</span>. 
+        <p className="text-xl text-gray-300 max-w-lg mx-auto font-light">
+          Keep your eye on the <span className="text-orange-400 font-semibold">Orange Cup</span>. 
           Don't lose track as they shuffle!
         </p>
       </motion.div>
 
       {/* Game Area */}
-      <div className="relative w-full max-w-4xl h-80 md:h-96 flex items-center justify-center bg-white/40 rounded-3xl backdrop-blur-sm border border-white/60 shadow-inner overflow-hidden mb-12">
+      <div className="relative w-full max-w-4xl h-80 md:h-96 flex items-center justify-center bg-black/30 rounded-3xl backdrop-blur-md border border-white/10 shadow-2xl overflow-hidden mb-12">
         <div className="flex gap-4 md:gap-12 lg:gap-24 relative z-10 px-8">
           <AnimatePresence>
             {cupOrder.map((cupId) => (
