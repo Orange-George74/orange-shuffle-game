@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, Trophy, Target, X } from "lucide-react";
+import { RefreshCw, Trophy, Target, X, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import bgImage from "@assets/a-modern-abstract-digital-background-fea_XOEiEaRDTkmr_0f0Fy6tC_1768020326024.png";
 
@@ -30,6 +30,10 @@ export default function Game() {
   const [tournamentWins, setTournamentWins] = useState(0);
   const [tournamentLosses, setTournamentLosses] = useState(0);
   const [gamesPlayed, setGamesPlayed] = useState(0);
+  
+  // Bonus hint state
+  const [bonusUsed, setBonusUsed] = useState(false);
+  const [hintShellId, setHintShellId] = useState<number | null>(null);
   
   const { toast } = useToast();
 
@@ -66,10 +70,30 @@ export default function Game() {
       setTournamentWins(0);
       setTournamentLosses(0);
       setGamesPlayed(0);
+      setBonusUsed(false);
     }
     setWinningShell(null);
+    setHintShellId(null);
     setGameState("shuffling");
     setShufflesLeft(10);
+  };
+
+  const useBonus = () => {
+    if (bonusUsed || gameState !== "guessing") return;
+    
+    setBonusUsed(true);
+    setHintShellId(1); // Shell ID 1 always has the orange
+    
+    toast({
+      title: "Juicy Hint Activated!",
+      description: "Watch for the shaking shell...",
+      className: "bg-yellow-900/90 border-yellow-600 text-yellow-100",
+    });
+    
+    // Stop shaking after 2 seconds
+    setTimeout(() => {
+      setHintShellId(null);
+    }, 2000);
   };
 
   const handleShellClick = (shellId: number) => {
@@ -191,6 +215,7 @@ export default function Game() {
                 highlight={winningShell === shellId}
                 onClick={() => handleShellClick(shellId)}
                 clickable={gameState === "guessing"}
+                isShaking={hintShellId === shellId}
               />
             ))}
           </AnimatePresence>
@@ -200,7 +225,7 @@ export default function Game() {
       </div>
 
       {/* Controls */}
-      <div className="flex justify-center mb-8">
+      <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-8">
         <Button
           onClick={startGame}
           disabled={gameState === "shuffling"}
@@ -226,7 +251,33 @@ export default function Game() {
             isTournamentActive ? "Next Round" : "Start Game"
           )}
         </Button>
+
+        {/* Bonus Juicy Card */}
+        <Button
+          onClick={useBonus}
+          disabled={bonusUsed || gameState !== "guessing"}
+          size="lg"
+          data-testid="button-bonus"
+          className={`
+            h-16 px-8 text-lg rounded-2xl font-display font-bold tracking-wide shadow-xl
+            transform hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200
+            ${bonusUsed 
+              ? 'bg-gray-700 text-gray-400 cursor-not-allowed opacity-50' 
+              : 'bg-gradient-to-r from-yellow-500 to-orange-400 hover:from-yellow-400 hover:to-orange-300 shadow-yellow-500/20 text-white'
+            }
+          `}
+        >
+          <Sparkles className="mr-2 h-5 w-5" />
+          {bonusUsed ? "Bonus Used" : "Juicy Hint"}
+        </Button>
       </div>
+
+      {/* Bonus Card Info */}
+      {!bonusUsed && gameState !== "tournament_end" && (
+        <p className="text-center text-gray-500 text-sm mb-4">
+          Use your Juicy Hint once per tournament to reveal the right shell!
+        </p>
+      )}
 
       {/* Tournament End Message */}
       {isTournamentEnd && (
@@ -287,7 +338,8 @@ function Shell({
   isRevealed, 
   highlight, 
   onClick, 
-  clickable 
+  clickable,
+  isShaking 
 }: { 
   id: number; 
   hasOrange: boolean; 
@@ -295,7 +347,23 @@ function Shell({
   highlight: boolean;
   onClick: () => void;
   clickable: boolean;
+  isShaking: boolean;
 }) {
+  // Shake animation variants
+  const shakeVariants = {
+    shake: {
+      x: [0, -8, 8, -8, 8, -4, 4, 0],
+      transition: {
+        duration: 0.5,
+        repeat: Infinity,
+        repeatType: "loop" as const,
+      }
+    },
+    still: {
+      x: 0,
+    }
+  };
+
   return (
     <motion.div
       layout
@@ -318,6 +386,7 @@ function Shell({
         animate={{
           y: isRevealed && hasOrange ? -60 : isRevealed && !hasOrange ? -20 : 0,
           scale: clickable ? 1.05 : 1,
+          ...(isShaking ? shakeVariants.shake : shakeVariants.still),
         }}
         whileHover={clickable ? { y: -10 } : {}}
         whileTap={clickable ? { scale: 0.95 } : {}}
@@ -328,14 +397,16 @@ function Shell({
           cup-shadow flex items-center justify-center
           transition-colors duration-300
           ${highlight ? 'border-green-400 ring-4 ring-green-500/30' : 'border-orange-700'}
+          ${isShaking ? 'border-yellow-400 ring-4 ring-yellow-500/40' : ''}
           ${clickable ? 'cursor-pointer hover:border-orange-300 hover:from-orange-300 hover:to-orange-500' : 'cursor-default'}
         `}
       >
         <span className={`
           text-3xl font-bold font-display opacity-40
           ${highlight ? 'text-green-300' : 'text-white'}
+          ${isShaking ? 'text-yellow-300' : ''}
         `}>
-          ?
+          {isShaking ? '!' : '?'}
         </span>
         
         {/* Shell shine reflection */}
